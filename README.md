@@ -1,6 +1,8 @@
 # QuranWatch
 
-![P1](images/01.jpg)
+<p align="center">
+  <img src="images/01.jpg" alt="Résultat du calcul lunaire" width="300">
+</p>
 
 
 **A prayer-times, Hijri-calendar and Quran-reading-tracker watch face for the Watchy e-paper smartwatch.**
