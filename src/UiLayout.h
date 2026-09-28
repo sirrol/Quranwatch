@@ -177,31 +177,35 @@ inline void drawZoneBookmark(Adafruit_GFX &d, const QuranBookmark &bm) {
 }
 
 // ---------------------------------------------------------------
-// Zone 2: Hijri 4x3 month grid, current month circled
+// Zone 2: Hijri 4x3 month grid. The current month is shown in an
+// inverted box (white digits on a black cell).
 // ---------------------------------------------------------------
 inline void drawZoneHijriGrid(Adafruit_GFX &d, const HijriDate &hijri) {
   using namespace UiZones;
   int16_t cellW = (R2_COL1_X1 - R2_COL1_X0) / 3;
   int16_t cellH = (ROW2_Y1 - ROW2_Y0) / 4;
 
-  d.setTextColor(GxEPD_BLACK);
-
   for (int row = 0; row < 4; row++) {
     for (int col = 0; col < 3; col++) {
       int monthNum = row * 3 + col + 1;
-      int16_t cellCx = R2_COL1_X0 + col * cellW + cellW / 2;
-      int16_t cellCy = ROW2_Y0 + row * cellH + cellH / 2;
+      int16_t cellX0 = R2_COL1_X0 + col * cellW;
+      int16_t cellY0 = ROW2_Y0 + row * cellH;
+      int16_t cellCx = cellX0 + cellW / 2;
+      int16_t cellCy = cellY0 + cellH / 2;
 
+      bool isCurrent = isCurrentHijriMonth(monthNum, hijri);
+      if (isCurrent) {
+        // Inverted box, inset by 2 px so it stays clear of the separators.
+        d.fillRect(cellX0 + 2, cellY0 + 2, cellW - 4, cellH - 4, GxEPD_BLACK);
+      }
+
+      d.setTextColor(isCurrent ? GxEPD_WHITE : GxEPD_BLACK);
       char buf[4];
       snprintf(buf, sizeof(buf), "%02d", monthNum);
       drawCenteredText(d, buf, cellCx, cellCy - qwTextHeight(1) / 2, 1);
-
-      if (isCurrentHijriMonth(monthNum, hijri)) {
-        int16_t r = min(cellW, cellH) / 2 - 2;
-        d.drawCircle(cellCx, cellCy, r, GxEPD_BLACK);
-      }
     }
   }
+  d.setTextColor(GxEPD_BLACK);
 }
 
 // ---------------------------------------------------------------
