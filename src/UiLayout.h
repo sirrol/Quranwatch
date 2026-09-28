@@ -208,10 +208,13 @@ inline void drawZoneHijriGrid(Adafruit_GFX &d, const HijriDate &hijri) {
   d.setTextColor(GxEPD_BLACK);
 }
 
-// ---------------------------------------------------------------
+/// ---------------------------------------------------------------
 // Zone 5: Hour, with four quarter-hour dots underneath.
-// Dots filled = 1 + minute/15  (00-14: 1, 15-29: 2, 30-44: 3,
-// 45-59: 4), then back to 1 at the next hour.
+//   - already-passed quarters: solid black dot
+//   - current quarter:         black dot with a white center (ring)
+//   - upcoming quarters:       empty (outline only)
+// filled = 1 + minute/15  (00-14: 1, 15-29: 2, 30-44: 3, 45-59: 4),
+// the LAST of these `filled` dots is the current one.
 // ---------------------------------------------------------------
 inline void drawZoneHour(Adafruit_GFX &d, int hour24, int minute) {
   using namespace UiZones;
@@ -230,18 +233,25 @@ inline void drawZoneHour(Adafruit_GFX &d, int hour24, int minute) {
   int16_t dotsCy = ROW2_Y0 + 76;
   int filled = minute / 15 + 1;
   if (filled > 4) filled = 4;
+  int current = filled - 1; // index (0-3) of the current quarter
 
   for (int i = 0; i < 4; i++) {
     int16_t dx = cx + (int16_t)((i - 1.5f) * spacing);
-    if (i < filled) {
+    if (i < current) {
+      // already passed: solid dot
       d.fillCircle(dx, dotsCy, r, GxEPD_BLACK);
+    } else if (i == current) {
+      // current quarter: ring (black dot, white center)
+      d.fillCircle(dx, dotsCy, r, GxEPD_BLACK);
+      d.fillCircle(dx, dotsCy, r - 3, GxEPD_WHITE);
     } else {
-      // empty dot: 2px outline so it stays visible on e-ink
+      // upcoming: empty outline, 2px so it stays visible on e-ink
       d.drawCircle(dx, dotsCy, r, GxEPD_BLACK);
       d.drawCircle(dx, dotsCy, r - 1, GxEPD_BLACK);
     }
   }
 }
+
 // ---------------------------------------------------------------
 // Zones 7/8/9: S / V / P thick vertical progress bars
 // ---------------------------------------------------------------
