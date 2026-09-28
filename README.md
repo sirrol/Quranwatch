@@ -48,7 +48,7 @@ QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion 
 - The current prayer period is highlighted by inverting its cell.
 
 ### Hijri calendar
-- A 12-month grid (01 to 12) with the **current Hijri month circled**.
+- A 12-month grid (01 to 12) with the **current Hijri month highlighted**.
 - The information zone shows the Hijri day with a month abbreviation (Muh, Saf, R1, R2, J1, J2, Raj, Sha, Ram, Shw, DQ, DH) and the Hijri year.
 - Manual correction of −3 to +3 days to align with your local moon-sighting authority.
 
