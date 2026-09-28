@@ -130,4 +130,4 @@ QuranWatch/
 
 ## License
 
-Add your license here (for example MIT).
+GPL-3.0 license
