@@ -61,6 +61,11 @@ QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion 
 - A progress bar shows the percentage of the whole Quran (6,236 verses) reached by the bookmark.
 - The bookmark is edited on the watch. Holding MENU for 3 seconds jumps straight to the editor.
 
+<p align="center">
+  <img src="images/02.jpg" alt="Résultat du calcul lunaire" width="300">
+</p>
+
+
 ### Clock
 - The hour is shown large, with four dots underneath that fill each quarter of the hour (`●○○○` → `●●○○` → `●●●○` → `●●●●`).
 
@@ -75,6 +80,18 @@ QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion 
 | **BACK** | — | Save and return to the watch face |
 
 The main menu has four entries: **Settings**, **Set time**, **Set date** and **Quran bookmark**. Button names follow the Watchy library. On some units the physical positions may differ, and only the pin macros need to be swapped.
+
+<p align="center">
+  <img src="images/03.jpg" alt="Résultat du calcul lunaire" width="300">
+</p>
+
+<p align="center">
+  <img src="images/04.jpg" alt="Résultat du calcul lunaire" width="300">
+</p>
+
+## Community guide for the Watchy
+
+https://github.com/Szybet/WatchySourcingHub (very interesting)
 
 ## Installation
 
