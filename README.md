@@ -1,5 +1,9 @@
 # QuranWatch
 
+<p align="center">
+  <img src="images/01.jpg" alt="pic" width="300">
+</p>
+
 **A prayer-times, Hijri-calendar and Quran-reading-tracker watch face for the Watchy e-paper smartwatch.**
 
 QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion for daily worship. Everything is computed on the watch itself. It needs no phone, no Wi-Fi and no account, and it shows only numbers and short abbreviations, so it is not tied to any interface language.
@@ -33,6 +37,10 @@ QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion 
 - **E-paper readability.** High contrast, always on, and readable in sunlight. The current Hijri month and the current prayer are each shown as an inverted (white-on-black) cell rather than an outline, for a clearer at-a-glance read.
 - **Maintainable code.** The project is split into small single-purpose files (prayer times, Hijri calendar, moon, Quran data, storage, UI, input), so changes stay local.
 
+<p align="center">
+  <img src="images/02.jpg" alt="pic" width="300">
+</p>
+
 ## Features
 
 ### Prayer times
@@ -65,6 +73,10 @@ QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion 
 - **Settings** covers latitude, longitude, time zone, DST, prayer method, Asr method, Hijri adjustment, prayer vibration on/off, and display inversion on/off.
 - **Display inversion** is a software option (not the e-paper controller's hardware command, which some clones ignore) - every draw call in the project goes through it, so toggling it flips the whole screen consistently.
 
+<p align="center">
+  <img src="images/03.jpg" alt="pic" width="300">
+</p>
+
 ## Controls
 
 | Button | On the watch face | In the main menu | Inside a screen |
@@ -76,6 +88,10 @@ QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion 
 | **BACK** | - | Return to the watch face | Save and return to the watch face |
 
 The main menu has four entries: **SETTINGS**, **SET TIME**, **SET DATE**, **QURAN BOOKMARK**. Button names follow the Watchy library; on some units the physical positions may differ, in which case only the pin macros need to be swapped.
+
+<p align="center">
+  <img src="images/04.jpg" alt="pic" width="300">
+</p>
 
 ## Installation
 
@@ -139,4 +155,4 @@ QuranWatch/
 
 ## License
 
-Add your license here (for example MIT).
+GNU General Public License Version 3 (GPL v3)
