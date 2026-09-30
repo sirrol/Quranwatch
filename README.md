@@ -6,7 +6,7 @@
 
 **A prayer-times, Hijri-calendar and Quran-reading-tracker watch face for the Watchy e-paper smartwatch.**
 
-QuranWatch turns a Watchy (v2 and compatible clones) into a dedicated companion for daily worship. Everything is computed on the watch itself. It needs no phone, no Wi-Fi and no account, and it shows only numbers and short abbreviations, so it is not tied to any interface language.
+QuranWatch turns a Watchy (v2 and compatible [clones](https://github.com/Szybet/WatchySourcingHub) into a dedicated companion for daily worship. Everything is computed on the watch itself. It needs no phone, no Wi-Fi and no account, and it shows only numbers and short abbreviations, so it is not tied to any interface language.
 
 ```
 +--------+----------------+----------+
