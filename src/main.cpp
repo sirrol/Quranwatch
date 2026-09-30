@@ -4,9 +4,20 @@
   Target : Watchy v2 (ESP32) - including clones, PlatformIO
   Screen : 200 x 200 monochrome e-paper
 
-  Time/date: the RTC chip is NEVER written. Displayed time =
-  RTC time + stored offset (see Storage.h).
-  Prayer vibration: checked on every wake-up (once a minute).
+  Time/date: the RTC chip is NEVER written (some Watchy v2 clones
+  misbehave on RTC writes). Displayed time =
+        RTC time + stored offset (seconds)
+  "Setting" the time/date just recomputes and stores that offset
+  in flash (see Storage.h). The RTC is re-read on every wake-up,
+  since Watchy does not refresh currentTime on a button press.
+
+  Prayer vibration: checked on every wake-up (about once a
+  minute). Vibrates once per prayer per day, at Fajr, Dhuhr, Asr,
+  Maghrib and Isha (not sunrise), if enabled in Settings.
+
+  Low battery: below LOW_BATTERY_PERCENT (AppConfig.h), the info
+  zone's battery line inverts with a "!" and the watch vibrates an
+  SOS in Morse code, repeated at most every 30 minutes.
 */
 
 #include <Arduino.h>
@@ -22,16 +33,19 @@
 #include "UiLayout.h"
 #include "InputHandler.h"
 
-// Last prayer already signalled by vibration (survives deep sleep),
-// so each prayer vibrates only once per day.
+// Last prayer already signalled by vibration, and the last minute
+// an SOS was buzzed - both survive deep sleep via RTC_DATA_ATTR so
+// each event fires at most once (prayer) / every 30 min (battery).
 RTC_DATA_ATTR int32_t qwLastVibKey = -1;
+RTC_DATA_ATTR int32_t qwLastLowBatMinute = -1000000;
 
 class QuranWatch : public Watchy {
  public:
   explicit QuranWatch(const watchySettings &settings) : Watchy(settings) {}
 
-  // RTC time + our stored offset. The RTC is re-read every time:
-  // Watchy does NOT refresh currentTime on a button wake-up.
+  // RTC time + our stored offset. Re-reads the RTC every call:
+  // Watchy does NOT refresh currentTime on a button wake-up, so it
+  // would otherwise hold a stale value.
   tmElements_t effectiveTime() {
     RTC.read(currentTime);
     tmElements_t raw = currentTime;
@@ -68,8 +82,31 @@ class QuranWatch : public Watchy {
     }
   }
 
+  // SOS in Morse code once battery is at/below LOW_BATTERY_PERCENT,
+  // repeated at most every 30 minutes.
+  void checkLowBattery() {
+    float v = getBatteryVoltage();
+    if (batteryVoltageToPercent(v) > LOW_BATTERY_PERCENT) return;
+
+    tmElements_t now = effectiveTime();
+    int32_t nowMinute = (int32_t)(makeTime(now) / 60);
+    if (nowMinute - qwLastLowBatMinute >= 30) {
+      qwLastLowBatMinute = nowMinute;
+      qwSosBuzz();
+    }
+  }
+
   void drawWatchFace() override {
     checkPrayerVibration();
+    checkLowBattery();
+
+    AppSettings settings;
+    QWStorage::loadSettings(settings);
+    qwInvertColors = settings.invertDisplay; // software inversion (see
+                                              // UiCommon.h) - this hardware's
+                                              // display.invertDisplay() does
+                                              // nothing, so we invert every
+                                              // draw call ourselves instead
 
     switch (qwScreen) {
       case SCREEN_MAIN_MENU:
@@ -89,9 +126,7 @@ class QuranWatch : public Watchy {
         break;
       case SCREEN_WATCHFACE:
       default: {
-        AppSettings settings;
         QuranBookmark bookmark;
-        QWStorage::loadSettings(settings);
         QWStorage::loadBookmark(bookmark);
 
         tmElements_t now = effectiveTime();
@@ -132,7 +167,7 @@ class QuranWatch : public Watchy {
         desired.Year = commit.year - 1970;
       }
       // Keep the RTC's own seconds so the offset is a whole number
-      // of minutes (keeps the every-minute wake-up aligned).
+      // of minutes (keeps the every-minute wake-up alarm aligned).
       desired.Second = currentTime.Second;
 
       tmElements_t raw = currentTime;

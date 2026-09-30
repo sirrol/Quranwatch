@@ -3,8 +3,25 @@
   InputHandler.h
   ------------------------------------------------------------
   Button state machine, menus and settings screens.
-  New: PRAYER VIBRATE option (SETTINGS) + qwPrayerBuzz(), the
-  100 ms ON / 120 ms OFF / 100 ms ON pattern.
+
+  RTC_DATA_ATTR is what makes any menu state survive: Watchy
+  deep-sleeps the ESP32 between every single button press, which
+  wipes ordinary RAM, so all menu state has to live in the small
+  pool of memory that survives deep sleep.
+
+  Button map:
+    MENU  short press : watch face -> open main menu
+                         main menu  -> enter highlighted item
+                         inside a screen -> next field
+    MENU  long press (3s), from watch face only:
+                       -> jump straight into the Quran bookmark editor
+    UP    press/hold  : move selection up / increase value
+                         (accelerates the longer you hold - see
+                         qwAccelStep)
+    DOWN  press/hold  : move selection down / decrease value
+    BACK  short press : save & return to the watch face from any
+                         screen; returns to the watch face (not
+                         the menu) from the main menu too
 */
 
 #include <Arduino.h>
@@ -22,7 +39,8 @@
 #define GxEPD_WHITE 1
 #endif
 
-// Vibration pattern: 100 ms ON -> 120 ms OFF -> 100 ms ON.
+// Vibration pattern for prayer times: 100 ms ON -> 120 ms OFF ->
+// 100 ms ON.
 inline void qwPrayerBuzz() {
   pinMode(VIB_MOTOR_PIN, OUTPUT);
   digitalWrite(VIB_MOTOR_PIN, HIGH);
@@ -32,6 +50,27 @@ inline void qwPrayerBuzz() {
   digitalWrite(VIB_MOTOR_PIN, HIGH);
   delay(100);
   digitalWrite(VIB_MOTOR_PIN, LOW);
+}
+
+// SOS in Morse code for the low-battery warning: . . . -- -- -- . . .
+// dot=150ms, dash=450ms (3x dot), gap between signals=150ms,
+// gap between letters=450ms (3x dot).
+inline void qwSosBuzz() {
+  pinMode(VIB_MOTOR_PIN, OUTPUT);
+  const uint16_t DOT = 150, DASH = 450, GAP = 150, LETTER_GAP = 450;
+
+  auto pulse = [&](uint16_t onMs) {
+    digitalWrite(VIB_MOTOR_PIN, HIGH);
+    delay(onMs);
+    digitalWrite(VIB_MOTOR_PIN, LOW);
+    delay(GAP);
+  };
+
+  pulse(DOT); pulse(DOT); pulse(DOT);
+  delay(LETTER_GAP - GAP);
+  pulse(DASH); pulse(DASH); pulse(DASH);
+  delay(LETTER_GAP - GAP);
+  pulse(DOT); pulse(DOT); pulse(DOT);
 }
 
 enum AppScreen : uint8_t {
@@ -60,6 +99,7 @@ enum SettingsField : uint8_t {
   FIELD_ASR_METHOD,
   FIELD_HIJRI_ADJUST,
   FIELD_PRAYER_VIBRATE,
+  FIELD_INVERT_DISPLAY,
   FIELD_COUNT
 };
 
@@ -165,6 +205,9 @@ inline void qwAdjustSettingsField(int8_t dir, unsigned long heldMs) {
       qwTempSettings.prayerVibrate = !qwTempSettings.prayerVibrate;
       if (qwTempSettings.prayerVibrate) qwPrayerBuzz(); // preview
       break;
+    case FIELD_INVERT_DISPLAY:
+      qwTempSettings.invertDisplay = !qwTempSettings.invertDisplay;
+      break;
   }
 }
 
@@ -262,26 +305,30 @@ inline void qwFieldValueString(char *out, size_t outLen, uint8_t field,
     case FIELD_PRAYER_VIBRATE:
       snprintf(out, outLen, "%s", s.prayerVibrate ? "ON" : "OFF");
       break;
+    case FIELD_INVERT_DISPLAY:
+      snprintf(out, outLen, "%s", s.invertDisplay ? "ON" : "OFF");
+      break;
   }
 }
 
 inline const char *qwFieldLabel(uint8_t field) {
   static const char *labels[FIELD_COUNT] = {
       "LATITUDE",      "LONGITUDE",  "TIME ZONE",    "DST",
-      "PRAYER METHOD", "ASR METHOD", "HIJRI ADJUST", "PRAYER VIBRATE"};
+      "PRAYER METHOD", "ASR METHOD", "HIJRI ADJUST", "PRAYER VIBRATE",
+      "INVERT DISPLAY"};
   return labels[field];
 }
 
 inline void qwDrawTitle(Adafruit_GFX &d, const char *title) {
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 2);
   d.setCursor(6, 4);
   d.print(title);
-  d.drawFastHLine(0, 24, 200, GxEPD_BLACK);
+  d.drawFastHLine(0, 24, 200, qwInk());
 }
 
 inline void qwDrawMainMenu(Adafruit_GFX &d) {
-  d.fillScreen(GxEPD_WHITE);
+  d.fillScreen(qwPaper());
   qwDrawTitle(d, "MENU");
 
   static const char *items[MENU_ITEM_COUNT] = {"SETTINGS", "SET TIME",
@@ -290,24 +337,24 @@ inline void qwDrawMainMenu(Adafruit_GFX &d) {
   for (int i = 0; i < MENU_ITEM_COUNT; i++) {
     bool selected = (i == qwMenuIndex);
     if (selected) {
-      d.fillRect(4, y - 4, 192, 20, GxEPD_BLACK);
-      d.setTextColor(GxEPD_WHITE);
+      d.fillRect(4, y - 4, 192, 20, qwInk());
+      d.setTextColor(qwPaper());
     } else {
-      d.setTextColor(GxEPD_BLACK);
+      d.setTextColor(qwInk());
     }
     qwSetText(d, 2);
     d.setCursor(10, y);
     d.print(items[i]);
     y += 28;
   }
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 1);
   d.setCursor(6, 190);
   d.print("UP/DOWN=select  MENU=open  BACK=exit");
 }
 
 inline void qwDrawSettingsScreen(Adafruit_GFX &d) {
-  d.fillScreen(GxEPD_WHITE);
+  d.fillScreen(qwPaper());
   qwDrawTitle(d, "SETTINGS");
 
   int16_t y0 = 34, spacing = 16;
@@ -315,10 +362,10 @@ inline void qwDrawSettingsScreen(Adafruit_GFX &d) {
     int16_t y = y0 + i * spacing;
     bool selected = (i == qwSettingsField);
     if (selected) {
-      d.fillRect(2, y - 3, 196, 14, GxEPD_BLACK);
-      d.setTextColor(GxEPD_WHITE);
+      d.fillRect(2, y - 3, 196, 14, qwInk());
+      d.setTextColor(qwPaper());
     } else {
-      d.setTextColor(GxEPD_BLACK);
+      d.setTextColor(qwInk());
     }
     qwSetText(d, 1);
     d.setCursor(6, y);
@@ -330,7 +377,7 @@ inline void qwDrawSettingsScreen(Adafruit_GFX &d) {
     d.setCursor(194 - w, y);
     d.print(val);
   }
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 1);
   d.setCursor(4, 172);
   d.print("UP/DOWN=edit");
@@ -342,24 +389,24 @@ inline void qwDrawValueBox(Adafruit_GFX &d, int16_t x, int16_t w,
                             const char *valueText, const char *label,
                             uint8_t valueSize, bool selected) {
   int16_t boxTop = 60, boxH = 46;
-  if (selected) d.fillRect(x, boxTop, w, boxH, GxEPD_BLACK);
-  else d.drawRect(x, boxTop, w, boxH, GxEPD_BLACK);
-  d.setTextColor(selected ? GxEPD_WHITE : GxEPD_BLACK);
+  if (selected) d.fillRect(x, boxTop, w, boxH, qwInk());
+  else d.drawRect(x, boxTop, w, boxH, qwInk());
+  d.setTextColor(selected ? qwPaper() : qwInk());
   qwSetText(d, valueSize);
-  int16_t vw = qwTextWidth((uint8_t)strlen(valueText), valueSize);
+  int16_t vw = qwTextInkWidth((uint8_t)strlen(valueText), valueSize);
   int16_t vh = qwTextHeight(valueSize);
   d.setCursor(x + (w - vw) / 2, boxTop + (boxH - vh) / 2);
   d.print(valueText);
 
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 1);
-  int16_t lw = qwTextWidth((uint8_t)strlen(label), 1);
+  int16_t lw = qwTextInkWidth((uint8_t)strlen(label), 1);
   d.setCursor(x + (w - lw) / 2, boxTop + boxH + 8);
   d.print(label);
 }
 
 inline void qwDrawSetTimeScreen(Adafruit_GFX &d) {
-  d.fillScreen(GxEPD_WHITE);
+  d.fillScreen(qwPaper());
   qwDrawTitle(d, "SET TIME");
 
   char hourBuf[4], minBuf[4];
@@ -369,14 +416,14 @@ inline void qwDrawSetTimeScreen(Adafruit_GFX &d) {
   qwDrawValueBox(d, 20, 70, hourBuf, "HOUR", 4, qwTempTime.subfield == 0);
   qwDrawValueBox(d, 110, 70, minBuf, "MINUTE", 4, qwTempTime.subfield == 1);
 
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 1);
   d.setCursor(6, 186);
   d.print("UP/DOWN=change  MENU=switch  BACK=save");
 }
 
 inline void qwDrawSetDateScreen(Adafruit_GFX &d) {
-  d.fillScreen(GxEPD_WHITE);
+  d.fillScreen(qwPaper());
   qwDrawTitle(d, "SET DATE");
 
   char dayBuf[4], monBuf[4], yearBuf[6];
@@ -388,14 +435,14 @@ inline void qwDrawSetDateScreen(Adafruit_GFX &d) {
   qwDrawValueBox(d, 68, 56, monBuf, "MONTH", 3, qwTempDate.subfield == 1);
   qwDrawValueBox(d, 132, 64, yearBuf, "YEAR", 2, qwTempDate.subfield == 2);
 
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 1);
   d.setCursor(6, 186);
   d.print("UP/DOWN=change  MENU=switch  BACK=save");
 }
 
 inline void qwDrawVerseEditScreen(Adafruit_GFX &d) {
-  d.fillScreen(GxEPD_WHITE);
+  d.fillScreen(qwPaper());
   qwDrawTitle(d, "QURAN BOOKMARK");
 
   char surahBuf[8], verseBuf[8];
@@ -405,7 +452,7 @@ inline void qwDrawVerseEditScreen(Adafruit_GFX &d) {
   qwDrawValueBox(d, 15, 85, surahBuf, "SURAH", 4, qwVerseSubfield == 0);
   qwDrawValueBox(d, 105, 85, verseBuf, "VERSE", 4, qwVerseSubfield == 1);
 
-  d.setTextColor(GxEPD_BLACK);
+  d.setTextColor(qwInk());
   qwSetText(d, 1);
   d.setCursor(6, 186);
   d.print("UP/DOWN=change  MENU=switch  BACK=save");

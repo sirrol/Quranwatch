@@ -41,6 +41,10 @@ static watchySettings QURANWATCH_SETTINGS = {
     false           // vibrateOClock
 };
 
+// Threshold, in percent, for the low-battery warning (inverted
+// "BAT x%!" in the info zone, plus a vibrated SOS).
+constexpr uint8_t LOW_BATTERY_PERCENT = 9;
+
 // ---------------------------------------------------------------
 // 2) Prayer calculation methods (angle presets).
 //    Umm al-Qura is a special case: Isha is a FIXED interval after
@@ -104,9 +108,11 @@ struct AppSettings {
   uint8_t prayerMethod;     // see PrayerMethod
   uint8_t asrMethod;        // see AsrMethod
   bool prayerVibrate;       // vibrate at Fajr, Dhuhr, Asr, Maghrib, Isha
+  bool invertDisplay;       // software color inversion (whole screen)
 };
 
-// Defaults: Paris, no DST, no Hijri correction, MWL method, standard Asr.
+// Defaults: Paris, no DST, no Hijri correction, MWL method, standard Asr,
+// prayer vibration on, normal (non-inverted) colors.
 static const AppSettings DEFAULT_APP_SETTINGS = {
     48.8566f, // latitude
     2.3522f,  // longitude
@@ -115,7 +121,8 @@ static const AppSettings DEFAULT_APP_SETTINGS = {
     0,        // Hijri adjustment
     METHOD_MWL,
     ASR_STANDARD,
-    true};
+    true,
+    false};
 
 // ---------------------------------------------------------------
 // 4) Quran bookmark (marque-page).

@@ -4,23 +4,29 @@
   ------------------------------------------------------------
   Astronomical lunar phase, no bitmaps.
 
-  v2: the mean-synodic-month model used before could be off by
-  4-5 percentage points because the Moon's real orbit is
-  elliptical. It is replaced by the Meeus "Astronomical
-  Algorithms" phase-angle formula (main periodic terms of the
-  Moon's and Sun's positions), which is accurate to a fraction of
-  a percent, day after day.
+  Uses the Meeus "Astronomical Algorithms" phase-angle formula
+  (main periodic terms of the Moon's and Sun's positions), which
+  is accurate to a fraction of a percent, day after day - more
+  accurate than a plain mean-synodic-month model, which can drift
+  several percentage points off because the Moon's real orbit is
+  elliptical.
 
   calculateMoonPhase() needs a real UTC timestamp. Do NOT pass
   time(nullptr) on the Watchy: its system clock is not restored
   after deep sleep. Build the UTC time from the RTC-based time
-  instead (see main.cpp).
+  instead (see main.cpp: utcNow is derived from effectiveTime()
+  and the configured UTC offset).
+
+  Colors: the illuminated side is drawn WHITE and the dark side
+  BLACK (inverted from a "black ink on white paper" convention),
+  with a black outline so the full moon still reads as a disk.
 */
 
 #include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <math.h>
 #include <time.h>
+#include "UiCommon.h"
 
 #ifndef GxEPD_BLACK
 #define GxEPD_BLACK 0
@@ -69,7 +75,7 @@ inline uint8_t moonIlluminationPercent(const MoonData &m) {
   return (uint8_t)round(m.illumination * 100.0);
 }
 
-// Draws the lit part (black) and the dark part (white), centered
+// Draws the lit part (white) and the dark part (black), centered
 // at (cx, cy), no bitmap. The terminator is an ellipse whose width
 // at each row follows the illuminated fraction exactly.
 inline void drawMoonIcon(Adafruit_GFX &display, int16_t cx, int16_t cy,
@@ -88,8 +94,8 @@ inline void drawMoonIcon(Adafruit_GFX &display, int16_t cx, int16_t cy,
 
     for (int16_t dx = -rowWidth; dx <= rowWidth; dx++) {
       bool lit = moon.waxing ? (dx >= t) : (dx <= t);
-      display.drawPixel(cx + dx, cy + dy, lit ? GxEPD_WHITE : GxEPD_BLACK);
+      display.drawPixel(cx + dx, cy + dy, lit ? qwPaper() : qwInk());
     }
   }
-  display.drawCircle(cx, cy, radius, GxEPD_BLACK);
+  display.drawCircle(cx, cy, radius, qwInk());
 }

@@ -2,9 +2,10 @@
 /*
   Storage.h
   ------------------------------------------------------------
-  Saves/loads AppSettings and the Quran bookmark to the ESP32's
-  non-volatile storage (flash), using the Preferences library
-  (built into the Arduino-ESP32 core - no extra lib_deps needed).
+  Saves/loads AppSettings, the Quran bookmark, and the time
+  offset to the ESP32's non-volatile storage (flash), using the
+  Preferences library (built into the Arduino-ESP32 core - no
+  extra lib_deps needed).
 
   This survives power loss / battery changes, unlike RTC_DATA_ATTR
   (which only survives deep sleep, not a full power-off).
@@ -35,6 +36,8 @@ inline void loadSettings(AppSettings &settings) {
       prefs.getUChar("asrMethod", DEFAULT_APP_SETTINGS.asrMethod);
   settings.prayerVibrate =
       prefs.getBool("prVib", DEFAULT_APP_SETTINGS.prayerVibrate);
+  settings.invertDisplay =
+      prefs.getBool("invert", DEFAULT_APP_SETTINGS.invertDisplay);
   prefs.end();
 }
 
@@ -49,6 +52,7 @@ inline void saveSettings(const AppSettings &settings) {
   prefs.putUChar("prMethod", settings.prayerMethod);
   prefs.putUChar("asrMethod", settings.asrMethod);
   prefs.putBool("prVib", settings.prayerVibrate);
+  prefs.putBool("invert", settings.invertDisplay);
   prefs.end();
 }
 
@@ -67,9 +71,10 @@ inline void saveBookmark(const QuranBookmark &bm) {
   prefs.putUShort("verse", bm.verse);
   prefs.end();
 }
+
 // Time offset (seconds) added to the RTC's own time to get the time
-// shown on the watch. Lets us "set" the time/date without ever writing
-// to the RTC chip.
+// shown on the watch. Lets us "set" the time/date without ever
+// writing to the RTC chip - see main.cpp.
 inline int32_t loadTimeOffset() {
   Preferences prefs;
   prefs.begin(NS, true);
@@ -84,4 +89,5 @@ inline void saveTimeOffset(int32_t offsetSeconds) {
   prefs.putInt("tOff", offsetSeconds);
   prefs.end();
 }
+
 } // namespace QWStorage
