@@ -1,7 +1,7 @@
 # QuranWatch
 
 <p align="center">
-  <img src="images/01.jpg" alt="pic" width="300">
+  <img src="images/01.jpg" alt="pic.V2" width="300">
 </p>
 
 **A prayer-times, Hijri-calendar and Quran-reading-tracker watch face for the Watchy e-paper smartwatch.**
@@ -38,7 +38,7 @@ QuranWatch turns a Watchy (v2 and compatible [clones](https://github.com/Szybet/
 - **Maintainable code.** The project is split into small single-purpose files (prayer times, Hijri calendar, moon, Quran data, storage, UI, input), so changes stay local.
 
 <p align="center">
-  <img src="images/02.jpg" alt="pic" width="300">
+  <img src="images/02.jpg" alt="picV2" width="300">
 </p>
 
 ## Features
@@ -74,7 +74,7 @@ QuranWatch turns a Watchy (v2 and compatible [clones](https://github.com/Szybet/
 - **Display inversion** is a software option (not the e-paper controller's hardware command, which some clones ignore) - every draw call in the project goes through it, so toggling it flips the whole screen consistently.
 
 <p align="center">
-  <img src="images/03.jpg" alt="pic" width="300">
+  <img src="images/03.jpg" alt="picV2" width="300">
 </p>
 
 ## Controls
@@ -90,7 +90,7 @@ QuranWatch turns a Watchy (v2 and compatible [clones](https://github.com/Szybet/
 The main menu has four entries: **SETTINGS**, **SET TIME**, **SET DATE**, **QURAN BOOKMARK**. Button names follow the Watchy library; on some units the physical positions may differ, in which case only the pin macros need to be swapped.
 
 <p align="center">
-  <img src="images/04.jpg" alt="pic" width="300">
+  <img src="images/04.jpg" alt="picV2" width="300">
 </p>
 
 ## Installation
